@@ -3,19 +3,19 @@
  *
  * \section LICENSE
  * The MIT License (MIT)
- *
+ * 
  * Copyright (c) 2014 VectorNav Technologies, LLC
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -218,51 +218,6 @@ extern "C" {
 #define BG6_LINEAR_ACCEL_ECEF	0x0100	/**< Compensated linear acceleration (no gravity) in Earth-Centered, Earth-Fixed (ECEF) frame. */
 #define BG6_POS_U				0x0200	/**< INS position uncertainty. */
 #define BG6_VEL_U				0x0400	/**< INS velocity uncertainty. */
-/** @} */
-
-/**
- * @defgroup Synchronization control register
- *
- * @{
- */
-#define SYNCINMODE_COUNT            3
-#define SYNCINMODE_IMU              4
-#define SYNCINMODE_ASYNC            5
-#define SYNCINEDGE_RISING           0
-#define SYNCINEDGE_FALLING          1
-#define SYNCOUTMODE_NONE            0
-#define SYNCOUTMODE_IMU_START       1
-#define SYNCOUTMODE_IMU_READY       2
-#define SYNCOUTMODE_AHRS            3
-#define SYNCOUTPOLARITY_NEGATIVE 0
-#define SYNCOUTPOLARITY_POSITIVE 1
-/** @} */
-
-/**
- * @defgroup Communication protocal control register
- *
- * @{
- */
-#define SERIALCOUNT_NONE            0
-#define SERIALCOUNT_SYNCIN_COUNT    1
-#define SERIALCOUNT_SYNCIN_TIME     2
-#define SERIALCOUNT_SYNCOUT_COUNT   3
-#define SERIALSTATUS_OFF            0
-#define SERIALSTATUS_VPE            1
-#define SPICOUNT_NONE               0
-#define SPICOUNT_SYNCIN_COUNT       1
-#define SPICOUNT_SYNCIN_TIME        2
-#define SPICOUNT_SYNCOUT_COUNT      3
-#define SPISTATUS_OFF               0
-#define SPISTATUS_VPE               1
-#define SERIALCHECKSUM_8BIT         1
-#define SERIALCHECKSUM_16BIT        3
-#define SPICHECKSUM_OFF             0
-#define SPICHECKSUM_8BIT            1
-#define SPICHECKSUM_16BIT           3
-#define ERRORMODE_IGNORE            0
-#define ERRORMODE_SEND              1
-#define ERRORMODE_ADOR              2
 /** @} */
 
 #define VN_RESPONSE_MATCH_SIZE			10		/**< Size to match for the response. */
@@ -510,7 +465,7 @@ typedef struct {
  * \param[in]	cmdToSend
  * Pointer to the command data to transmit to the VectorNav device. Should be
  * null-terminated.
- *
+ * 
  * \return VectorNav error code.
  */
 DLL_EXPORT VN_ERROR_CODE vndevice_transaction(
@@ -526,7 +481,7 @@ DLL_EXPORT VN_ERROR_CODE vndevice_transaction(
  * \param[in] vndevice Pointer to the VnDevice control object.
  * \param[in] listener The function pointer to be called when an error code
  *     is received.
- *
+ * 
  * \return VectorNav error code.
  */
 VN_ERROR_CODE vndevice_registerErrorCodeReceivedListener(
@@ -539,7 +494,7 @@ VN_ERROR_CODE vndevice_registerErrorCodeReceivedListener(
  *
  * \param[in] vndevice Pointer to the VnDevice control object.
  * \param[in] listener The function pointer to unregister.
- *
+ * 
  * \return VectorNav error code.
  */
 VN_ERROR_CODE vndevice_unregisterErrorCodeReceivedListener(
@@ -648,7 +603,7 @@ VN_ERROR_CODE vndevice_deinitializeVnDevice(
  * \param[in] vndevice Pointer to the VnDevice control object.
  * \param[in] listener The function pointer to be called when asynchronous data
  *     is received.
- *
+ * 
  * \return VectorNav error code.
  */
 VN_ERROR_CODE vndevice_registerAsyncDataReceivedListener(
@@ -661,7 +616,7 @@ VN_ERROR_CODE vndevice_registerAsyncDataReceivedListener(
  *
  * \param[in] vndevice Pointer to the VnDevice control object.
  * \param[in] listener The function pointer to unregister.
- *
+ * 
  * \return VectorNav error code.
  */
 VN_ERROR_CODE vndevice_unregisterAsyncDataReceivedListener(
