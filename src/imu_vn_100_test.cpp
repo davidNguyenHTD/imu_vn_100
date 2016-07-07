@@ -43,7 +43,8 @@ constexpr int ImuVn100::kDefaultSyncOutRate;
 
 void ImuVn100::SyncInfo::Update(const unsigned sync_count,
                                 const ros::Time& sync_time) {
-  if (rate <= 0) return;
+  if (rate <= 0)
+    return;
 
   if (count != sync_count) {
     count = sync_count;
@@ -51,7 +52,9 @@ void ImuVn100::SyncInfo::Update(const unsigned sync_count,
   }
 }
 
-bool ImuVn100::SyncInfo::SyncEnabled() const { return rate > 0; }
+bool ImuVn100::SyncInfo::SyncEnabled() const {
+  return rate > 0;
+}
 
 void ImuVn100::SyncInfo::FixSyncRate() {
   // Check the sync out rate
@@ -60,10 +63,8 @@ void ImuVn100::SyncInfo::FixSyncRate() {
       rate = ImuVn100::kBaseImuRate / (ImuVn100::kBaseImuRate / rate);
       ROS_INFO("Set SYNC_OUT_RATE to %d", rate);
     }
-    skip_count =
-        (std::floor(ImuVn100::kBaseImuRate / static_cast<double>(rate) +
-                    0.5f)) -
-        1;
+    skip_count = (std::floor(
+        ImuVn100::kBaseImuRate / static_cast<double>(rate) + 0.5f)) - 1;
 
     if (pulse_width_us > 10000) {
       ROS_INFO("Sync out pulse with is over 10ms. Reset to 1ms");
@@ -84,7 +85,9 @@ ImuVn100::ImuVn100(const ros::NodeHandle& pnh)
   imu_vn_100_ptr = this;
 }
 
-ImuVn100::~ImuVn100() { Disconnect(); }
+ImuVn100::~ImuVn100() {
+  Disconnect();
+}
 
 void ImuVn100::FixImuRate() {
   if (imu_rate_ <= 0) {
@@ -101,8 +104,8 @@ void ImuVn100::FixImuRate() {
 }
 
 void ImuVn100::LoadParameters() {
-  pnh_.param<std::string>("port", port_, std::string("/dev/ttyUSB0"));
-  pnh_.param<std::string>("frame_id", frame_id_, pnh_.getNamespace());
+  pnh_.param < std::string > ("port", port_, std::string("/dev/ttyUSB0"));
+  pnh_.param < std::string > ("frame_id", frame_id_, pnh_.getNamespace());
   pnh_.param("baudrate", baudrate_, 115200);
   pnh_.param("imu_rate", imu_rate_, kDefaultImuRate);
 
@@ -114,6 +117,7 @@ void ImuVn100::LoadParameters() {
   pnh_.param("sync_pulse_width_us", sync_info_.pulse_width_us, 1000);
 
   pnh_.param("binary_output", binary_output_, true);
+  pnh_.param("use_right_hand_rule_for_tf", use_right_hand_rule, false);
 
   FixImuRate();
   sync_info_.FixSyncRate();
@@ -121,18 +125,18 @@ void ImuVn100::LoadParameters() {
 
 void ImuVn100::CreateDiagnosedPublishers() {
   imu_rate_double_ = imu_rate_;
-  pd_imu_.Create<Imu>(pnh_, "imu", updater_, imu_rate_double_);
+  pd_imu_.Create < Imu > (pnh_, "imu", updater_, imu_rate_double_);
   if (enable_mag_) {
-    pd_mag_.Create<MagneticField>(pnh_, "magnetic_field", updater_,
-                                  imu_rate_double_);
+    pd_mag_.Create < MagneticField
+        > (pnh_, "magnetic_field", updater_, imu_rate_double_);
   }
   if (enable_pres_) {
-    pd_pres_.Create<FluidPressure>(pnh_, "fluid_pressure", updater_,
-                                   imu_rate_double_);
+    pd_pres_.Create < FluidPressure
+        > (pnh_, "fluid_pressure", updater_, imu_rate_double_);
   }
   if (enable_temp_) {
-    pd_temp_.Create<Temperature>(pnh_, "temperature", updater_,
-                                 imu_rate_double_);
+    pd_temp_.Create < Temperature
+        > (pnh_, "temperature", updater_, imu_rate_double_);
   }
 }
 
@@ -152,7 +156,7 @@ void ImuVn100::Initialize() {
   VnEnsure(vn100_setSerialBaudRate(&imu_, baudrate_, true));
 
   ROS_DEBUG("Disconnecting the device");
-  vn100_disconnect(&imu_);
+  vn100_disconnect (&imu_);
   ros::Duration(0.5).sleep();
 
   ROS_DEBUG("Reconnecting to device");
@@ -167,10 +171,10 @@ void ImuVn100::Initialize() {
   VnEnsure(vn100_pauseAsyncOutputs(&imu_, true));
 
   ROS_INFO("Fetching device info.");
-  char model_number_buffer[30] = {0};
+  char model_number_buffer[30] = { 0 };
   int hardware_revision = 0;
-  char serial_number_buffer[30] = {0};
-  char firmware_version_buffer[30] = {0};
+  char serial_number_buffer[30] = { 0 };
+  char firmware_version_buffer[30] = { 0 };
 
   VnEnsure(vn100_getModelNumber(&imu_, model_number_buffer, 30));
   ROS_INFO("Model number: %s", model_number_buffer);
@@ -183,24 +187,32 @@ void ImuVn100::Initialize() {
 
   if (sync_info_.SyncEnabled()) {
     ROS_INFO("Set Synchronization Control Register (id:32).");
-    VnEnsure(vn100_setSynchronizationControl(
-        &imu_, SYNCINMODE_COUNT, SYNCINEDGE_RISING, 0, SYNCOUTMODE_IMU_START,
-        SYNCOUTPOLARITY_POSITIVE, sync_info_.skip_count,
-        sync_info_.pulse_width_us * 1000, true));
+    VnEnsure(
+        vn100_setSynchronizationControl(&imu_, SYNCINMODE_COUNT,
+                                        SYNCINEDGE_RISING, 0,
+                                        SYNCOUTMODE_IMU_START,
+                                        SYNCOUTPOLARITY_POSITIVE,
+                                        sync_info_.skip_count,
+                                        sync_info_.pulse_width_us * 1000,
+                                        true));
 
     if (!binary_output_) {
       ROS_INFO("Set Communication Protocal Control Register (id:30).");
-      VnEnsure(vn100_setCommunicationProtocolControl(
-          &imu_, SERIALCOUNT_SYNCOUT_COUNT, SERIALSTATUS_OFF, SPICOUNT_NONE,
-          SPISTATUS_OFF, SERIALCHECKSUM_8BIT, SPICHECKSUM_8BIT, ERRORMODE_SEND,
-          true));
+      VnEnsure(
+          vn100_setCommunicationProtocolControl(&imu_,
+                                                SERIALCOUNT_SYNCOUT_COUNT,
+                                                SERIALSTATUS_OFF, SPICOUNT_NONE,
+                                                SPISTATUS_OFF,
+                                                SERIALCHECKSUM_8BIT,
+                                                SPICHECKSUM_8BIT,
+                                                ERRORMODE_SEND, true));
     }
   }
 
   CreateDiagnosedPublishers();
 
-  auto hardware_id = std::string("vn100-") + std::string(model_number_buffer) +
-                     std::string(serial_number_buffer);
+  auto hardware_id = std::string("vn100-") + std::string(model_number_buffer)
+      + std::string(serial_number_buffer);
   updater_.setHardwareID(hardware_id);
 }
 
@@ -213,11 +225,12 @@ void ImuVn100::Stream(bool async) {
 
     if (binary_output_) {
       // Set the binary output data type and data rate
-      VnEnsure(vn100_setBinaryOutput1Configuration(
-          &imu_, BINARY_ASYNC_MODE_SERIAL_1, kBaseImuRate / imu_rate_,
-          BG1_QTN | BG1_IMU | BG1_MAG_PRES | BG1_SYNC_IN_CNT,
-          // BG1_IMU,
-          BG3_NONE, BG5_NONE, true));
+      VnEnsure(
+          vn100_setBinaryOutput1Configuration(
+              &imu_, BINARY_ASYNC_MODE_SERIAL_1, kBaseImuRate / imu_rate_,
+              BG1_QTN | BG1_IMU | BG1_MAG_PRES | BG1_SYNC_IN_CNT,
+              // BG1_IMU,
+              BG3_NONE, BG5_NONE, true));
     } else {
       // Set the ASCII output data type and data rate
       // ROS_INFO("Configure the output data type and frequency (id: 6 & 7)");
@@ -251,7 +264,7 @@ void ImuVn100::Idle(bool need_reply) {
 
 void ImuVn100::Disconnect() {
   // TODO: why reset the device?
-  vn100_reset(&imu_);
+  vn100_reset (&imu_);
   vn100_disconnect(&imu_);
 }
 
@@ -290,7 +303,8 @@ void ImuVn100::PublishData(const VnDeviceCompositeData& data) {
 }
 
 void VnEnsure(const VnErrorCode& error_code) {
-  if (error_code == VNERR_NO_ERROR) return;
+  if (error_code == VNERR_NO_ERROR)
+    return;
 
   switch (error_code) {
     case VNERR_UNKNOWN_ERROR:
@@ -331,6 +345,23 @@ void RosQuaternionFromVnQuaternion(geometry_msgs::Quaternion& ros_quat,
   ros_quat.y = vn_quat.y;
   ros_quat.z = vn_quat.z;
   ros_quat.w = vn_quat.w;
+}
+
+void RosQuaternionFromVnQuaternion(geometry_msgs::Quaternion& ros_quat,
+                                   const VnQuaternion& vn_quat,
+                                   bool use_right_hand) {
+  if (use_right_hand) {
+    //we need to flip y-axis
+    ros_quat.x = vn_quat.x;
+    ros_quat.y = vn_quat.y;
+    ros_quat.z = -vn_quat.z;
+    ros_quat.w = vn_quat.w
+  } else {
+    ros_quat.x = vn_quat.x;
+    ros_quat.y = vn_quat.y;
+    ros_quat.z = vn_quat.z;
+    ros_quat.w = vn_quat.w;
+  }
 }
 
 void FillImuMessage(sensor_msgs::Imu& imu_msg,

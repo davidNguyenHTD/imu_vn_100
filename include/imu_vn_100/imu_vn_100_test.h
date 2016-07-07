@@ -118,7 +118,7 @@ class ImuVn100 {
   bool enable_pres_ = true;
   bool enable_temp_ = true;
   bool binary_output_ = true;
-
+  
   SyncInfo sync_info_;
 
   du::Updater updater_;

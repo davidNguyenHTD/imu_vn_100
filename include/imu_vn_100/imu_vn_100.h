@@ -26,6 +26,7 @@
 #include <sensor_msgs/MagneticField.h>
 #include <sensor_msgs/FluidPressure.h>
 #include <sensor_msgs/Temperature.h>
+#include <tf/tf.h>
 
 #include "vn/sensors/sensors.h"
 #include "vn/protocol/uart/types.h"
@@ -121,12 +122,14 @@ class ImuVn100 {
   bool enable_mag_ = true;
   bool enable_pres_ = true;
   bool enable_temp_ = true;
+  bool enable_rpy_ = true;
   bool binary_output_ = true;
+  bool use_right_hand_rule_ = false;
 
   SyncInfo sync_info_;
 
   du::Updater updater_;
-  DiagnosedPublisher pd_imu_, pd_mag_, pd_pres_, pd_temp_;
+  DiagnosedPublisher pd_imu_, pd_mag_, pd_pres_, pd_temp_, pd_rpy_;
 
   void FixImuRate();
   void LoadParameters();

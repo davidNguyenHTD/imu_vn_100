@@ -1,24 +1,26 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(imu_vn_100)
 
-# build the vnproflib first
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/vnproglib-1.1.0.115)
-
 add_definitions("-std=c++11")
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   diagnostic_updater
+  tf
 )
 find_package(Boost REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include vncpplib/include ext/vnproglib-1.1.0.115/include
   LIBRARIES imu_vn_100 vnproglib
-  CATKIN_DEPENDS diagnostic_updater roscpp sensor_msgs
+  CATKIN_DEPENDS diagnostic_updater roscpp sensor_msgs 
   DEPENDS boost
 )
+
+
+# build the vnproflib first
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/vnproglib-1.1.0.115)
 
 include_directories(
   include
@@ -60,3 +62,23 @@ add_dependencies(imu_vn_100_cont_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
+ ## Mark executables and/or libraries for installation
+install(TARGETS imu_vn_100 imu_vn_100_cont_node
+# ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+## Mark cpp header files for installation
+install(DIRECTORY include 
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+  PATTERN ".svn" EXCLUDE
+)
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES 
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+#)
