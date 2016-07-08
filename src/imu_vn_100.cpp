@@ -31,6 +31,9 @@ namespace imu_vn_100 {
  */
 void RosVector3FromVnVector3(geometry_msgs::Vector3& ros_vec3,
                              const vn::math::vec3f& vn_vec3);
+void RosVector3FromVnVector3(geometry_msgs::Vector3& ros_vec3,
+                             const vn::math::vec3f& vn_vec3,
+                             bool use_right_hand);
 
 /**
  * @brief RosQuaternionFromVnQuaternion
@@ -156,7 +159,11 @@ void ImuVn100::LoadParameters() {
 
   pnh_.param("binary_output", binary_output_, true);
 
-  pnh_.param("use_right_hand_rule_for_tf", use_right_hand_rule_, false);
+  pnh_.param("use_right_hand_rule", use_right_hand_rule_, false);
+  pnh_.param("min_gyro_vel", min_gyro_vel_, 0.005);
+
+  if (min_gyro_vel_ < 0.0)
+    min_gyro_vel_ = 0.0;
 
   int vn_serial_output_tmp = 4;  //init on invalid number
   pnh_.param("vn_serial_output", vn_serial_output_tmp, 1);
@@ -201,11 +208,12 @@ void ImuVn100::CreateDiagnosedPublishers() {
 
 void ImuVn100::Initialize() {
   LoadParameters();
-  
+
   ros::NodeHandle np;
-  
-  tare_service_server = np.advertiseService("tare_imu_vn_100", &ImuVn100::Tare, this);
-  
+
+  tare_service_server = np.advertiseService("tare_imu_vn_100", &ImuVn100::Tare,
+                                            this);
+
   unsigned int old_baudrate;
   // Try initial opening
   try {
@@ -334,12 +342,13 @@ void ImuVn100::Disconnect() {
 
 }
 
-bool ImuVn100::Tare(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res){
+bool ImuVn100::Tare(std_srvs::Empty::Request &req,
+                    std_srvs::Empty::Response &res) {
 
   ROS_INFO("Taring IMU now");
   imu_.tare(true);
   ROS_INFO("Done Taring IMU");
-  
+
   return true;
 }
 
@@ -349,6 +358,16 @@ void ImuVn100::PublishData(vn::protocol::uart::Packet& p) {
   imu_msg.header.frame_id = frame_id_;
 
   FillImuMessage(imu_msg, p, binary_output_, use_right_hand_rule_);
+
+  if (fabs(imu_msg.angular_velocity.x) < min_gyro_vel_)
+    imu_msg.angular_velocity.x = 0.0;
+
+  if (fabs(imu_msg.angular_velocity.y) < min_gyro_vel_)
+    imu_msg.angular_velocity.y = 0.0;
+
+  if (fabs(imu_msg.angular_velocity.z) < min_gyro_vel_)
+    imu_msg.angular_velocity.z = 0.0;
+
   pd_imu_.Publish(imu_msg);
 
   if (enable_mag_) {
@@ -380,7 +399,8 @@ void ImuVn100::PublishData(vn::protocol::uart::Packet& p) {
     tf::Quaternion tmp_;
     tf::quaternionMsgToTF(imu_msg.orientation, tmp_);
     tf::Matrix3x3(tmp_).getRPY(rpy_msg.x, rpy_msg.y, rpy_msg.z);
-    ROS_DEBUG_THROTTLE(0.5, "[IMU VN 100] Roll %.3f Pitch %.3f Yaw %.3f", rpy_msg.x, rpy_msg.y, rpy_msg.z);
+    ROS_DEBUG_THROTTLE(0.5, "[IMU VN 100] Roll %.3f Pitch %.3f Yaw %.3f",
+                       rpy_msg.x, rpy_msg.y, rpy_msg.z);
     //pd_rpy_.Publish(rpy_msg);
   }
 
@@ -392,9 +412,24 @@ void ImuVn100::PublishData(vn::protocol::uart::Packet& p) {
 
 void RosVector3FromVnVector3(geometry_msgs::Vector3& ros_vec3,
                              const vn::math::vec3f& vn_vec3) {
-  ros_vec3.x = vn_vec3[0];
-  ros_vec3.y = vn_vec3[1];
-  ros_vec3.z = vn_vec3[2];
+    ros_vec3.x = vn_vec3[0];
+    ros_vec3.y = vn_vec3[1];
+    ros_vec3.z = vn_vec3[2];
+}
+
+void RosVector3FromVnVector3(geometry_msgs::Vector3& ros_vec3,
+                             const vn::math::vec3f& vn_vec3,
+                             bool use_right_hand) {
+  if (use_right_hand) {
+    //we need to flip yaw rate
+    ros_vec3.x = vn_vec3[0];
+    ros_vec3.y = vn_vec3[1];
+    ros_vec3.z = -vn_vec3[2];
+  } else {
+    ros_vec3.x = vn_vec3[0];
+    ros_vec3.y = vn_vec3[1];
+    ros_vec3.z = vn_vec3[2];
+  }
 }
 
 void RosQuaternionFromVnVector4(geometry_msgs::Quaternion& ros_quat,
@@ -456,7 +491,7 @@ void FillImuMessage(sensor_msgs::Imu& imu_msg, vn::protocol::uart::Packet& p,
 
     RosQuaternionFromVnVector4(imu_msg.orientation, quaternion,
                                use_right_hand_rule);
-    RosVector3FromVnVector3(imu_msg.angular_velocity, angular_rate);
+    RosVector3FromVnVector3(imu_msg.angular_velocity, angular_rate, use_right_hand_rule);
     RosVector3FromVnVector3(imu_msg.linear_acceleration, linear_accel);
   } else {
     // TODO

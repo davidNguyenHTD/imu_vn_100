@@ -128,7 +128,8 @@ class ImuVn100 {
   bool enable_rpy_ = true;
   bool binary_output_ = true;
   bool use_right_hand_rule_ = false;
-
+  double min_gyro_vel_ = 0.0;
+  
   SyncInfo sync_info_;
 
   du::Updater updater_;
