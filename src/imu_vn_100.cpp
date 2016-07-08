@@ -201,6 +201,11 @@ void ImuVn100::CreateDiagnosedPublishers() {
 
 void ImuVn100::Initialize() {
   LoadParameters();
+  
+  ros::NodeHandle np;
+  
+  tare_service_server = np.advertiseService("tare_imu_vn_100", &ImuVn100::Tare, this);
+  
   unsigned int old_baudrate;
   // Try initial opening
   try {
@@ -297,9 +302,13 @@ void ImuVn100::Stream(bool async) {
     // add a callback function for new data event
     imu_.registerAsyncPacketReceivedHandler(this,
                                             asciiOrBinaryAsyncMessageReceived);
-
+  
+    
     ROS_INFO("Setting IMU rate to %d", imu_rate_);
     imu_.writeAsyncDataOutputFrequency(imu_rate_, true);
+    ROS_INFO("Taring IMU now during init");
+    imu_.tare(true);
+    ROS_INFO("Done Taring IMU");
   } else {
     // Mute the stream
     ROS_DEBUG("Mute the device");
@@ -323,6 +332,15 @@ void ImuVn100::Idle(bool need_reply) {
 
 void ImuVn100::Disconnect() {
 
+}
+
+bool ImuVn100::Tare(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res){
+
+  ROS_INFO("Taring IMU now");
+  imu_.tare(true);
+  ROS_INFO("Done Taring IMU");
+  
+  return true;
 }
 
 void ImuVn100::PublishData(vn::protocol::uart::Packet& p) {

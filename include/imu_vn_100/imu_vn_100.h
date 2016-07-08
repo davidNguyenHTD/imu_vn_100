@@ -27,6 +27,7 @@
 #include <sensor_msgs/FluidPressure.h>
 #include <sensor_msgs/Temperature.h>
 #include <tf/tf.h>
+#include <std_srvs/Empty.h>
 
 #include "vn/sensors/sensors.h"
 #include "vn/protocol/uart/types.h"
@@ -110,6 +111,8 @@ class ImuVn100 {
  private:
   ros::NodeHandle pnh_;
   vn::sensors::VnSensor imu_;
+  
+  ros::ServiceServer tare_service_server;
 
   // Settings
   std::string port_;
@@ -134,6 +137,7 @@ class ImuVn100 {
   void FixImuRate();
   void LoadParameters();
   void CreateDiagnosedPublishers();
+  bool Tare(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 };
 
 // Just don't like type that is ALL CAP
